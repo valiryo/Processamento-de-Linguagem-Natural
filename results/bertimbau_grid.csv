@@ -1,0 +1,2 @@
+config_id,learning_rate,epochs,max_length,fold,n_treino,n_validacao,accuracy,f1_macro,eval_loss,tempo_segundos,pico_vram_gb,status
+lr_2e-05_epochs_2_len_256,2e-05,2,256,0,16073,4019,0.45633242100024884,0.4488675958112334,1.0368763208389282,744.8097310999874,2.6916046142578125,ok
