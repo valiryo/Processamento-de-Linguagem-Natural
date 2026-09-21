@@ -1,0 +1,11 @@
+numpy
+pandas
+scikit-learn
+openpyxl
+matplotlib
+jupyter
+ipykernel
+transformers
+datasets
+accelerate
+sentencepiece

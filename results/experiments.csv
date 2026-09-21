@@ -1,0 +1,2 @@
+experimento,modelo,accuracy_media,accuracy_std,f1_macro_media,f1_macro_std
+baseline_oficial,TF-IDF + Logistic Regression,0.45177172623266576,0.006619168832953402,0.4496086675316568,0.006852996958080679

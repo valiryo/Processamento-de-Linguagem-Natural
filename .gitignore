@@ -1,0 +1,26 @@
+# Ambiente virtual
+.venv/
+
+# Python
+__pycache__/
+*.py[cod]
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Variáveis locais
+.env
+
+# Dados fornecidos para o trabalho
+data/raw/*.xlsx
+
+# Modelos e checkpoints grandes
+checkpoints/
+
+# Saídas finais
+output/*.xlsx
+
+# Sistema / IDE
+.DS_Store
+Thumbs.db
+.vscode/
