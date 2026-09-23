@@ -1,0 +1,2 @@
+model,max_length,learning_rate,epochs,n_instances,accuracy_oof,macro_f1_oof,n_duplicates,n_conflicting_duplicates
+BERTimbau,512,3e-05,2,20092,0.46521003384431614,0.46215010528891315,2123,1682
