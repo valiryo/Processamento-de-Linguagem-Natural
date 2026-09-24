@@ -22,7 +22,7 @@ RESULTS_PATH = RESULTS_DIR / "setfit_cv.csv"
 EXPERIMENTS_PATH = RESULTS_DIR / "setfit_experiments.csv"
 OUTPUT_DIR = ROOT_DIR / "output" / "setfit"
 
-MODEL_NAME = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
+MODEL_NAME = "sentence-transformers/paraphrase-multilingual-mpnet-base-v2"
 LABEL2ID = {"c1": 0, "c234": 1, "c5": 2}
 ID2LABEL = {value: key for key, value in LABEL2ID.items()}
 FOLDS = [0, 1, 2, 3, 4]
@@ -203,14 +203,22 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--all-folds", action="store_true", help="Executa os cinco folds; por padrão executa apenas o smoke test do fold 0.")
     parser.add_argument("--fold", type=int, choices=FOLDS, default=0, help="Fold único para smoke test.")
     parser.add_argument("--max-length", type=int, default=256)
-    parser.add_argument("--learning-rate", type=float, default=2e-5)
+    parser.add_argument("--learning-rates", nargs="+", type=float, default=[1e-5, 3e-5], help="Learning rates executados como configurações independentes.")
     parser.add_argument("--num-epochs", type=float, default=1)
     parser.add_argument("--batch-size", type=int, default=16)
     parser.add_argument("--sampling-strategy", choices=["oversampling", "undersampling", "unique"], default="oversampling")
     parser.add_argument("--num-iterations", type=int, default=1)
     parser.add_argument("--no-amp", action="store_true")
-    parser.add_argument("--config-id", default="minilm_l256_lr2e-5_ep1_bs16_iter1")
+    parser.add_argument("--config-prefix", default="mpnet_l256_ep1_bs16_iter1")
     return parser.parse_args()
+
+
+def formatar_learning_rate(learning_rate: float) -> str:
+    return (
+        f"{learning_rate:.0e}"
+        .replace("e-0", "e-")
+        .replace("e+0", "e+")
+    )
 
 
 def main() -> None:
@@ -218,22 +226,32 @@ def main() -> None:
     set_seed(SEED)
     train = carregar_dados()
     folds = FOLDS if args.all_folds else [args.fold]
-    print(f"Instâncias: {len(train)} | Folds encontrados: {FOLDS} | Executando: {folds}")
-    rows = [
-        executar_fold(
-            train=train,
-            fold=fold,
-            max_length=args.max_length,
-            learning_rate=args.learning_rate,
-            num_epochs=args.num_epochs,
-            batch_size=args.batch_size,
-            sampling_strategy=args.sampling_strategy,
-            num_iterations=args.num_iterations,
-            use_amp=not args.no_amp,
-            config_id=args.config_id,
+    print(
+        f"Instâncias: {len(train)} | Folds encontrados: {FOLDS} "
+        f"| Executando: {folds} | Learning rates: {args.learning_rates}"
+    )
+    rows = []
+    for learning_rate in args.learning_rates:
+        config_id = (
+            f"{args.config_prefix}_lr"
+            f"{formatar_learning_rate(learning_rate)}"
         )
-        for fold in folds
-    ]
+        print(f"\nConfiguração: {config_id}")
+        for fold in folds:
+            rows.append(
+                executar_fold(
+                    train=train,
+                    fold=fold,
+                    max_length=args.max_length,
+                    learning_rate=learning_rate,
+                    num_epochs=args.num_epochs,
+                    batch_size=args.batch_size,
+                    sampling_strategy=args.sampling_strategy,
+                    num_iterations=args.num_iterations,
+                    use_amp=not args.no_amp,
+                    config_id=config_id,
+                )
+            )
     salvar_resultados(rows)
     print(pd.DataFrame(rows).to_string(index=False))
 
