@@ -1,0 +1,3 @@
+config_id,model_name,folds,accuracy_mean,accuracy_std,macro_f1_mean,macro_f1_std,time_minutes_total
+minilm_l256_lr2e-5_ep1_bs16_iter1,sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2,5,0.418525945979704,0.008849107920012209,0.41579892392278667,0.009790512822101643,78.91947120499972
+mpnet_l256_lr2e-5_ep1_bs16_iter1,sentence-transformers/paraphrase-multilingual-mpnet-base-v2,5,0.4280800039454028,0.012941690820315628,0.42576385324979105,0.013174147886213435,262.8592789799994
