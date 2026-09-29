@@ -1,0 +1,2 @@
+﻿config_id,model_name,folds,accuracy_mean,accuracy_std,macro_f1_mean,macro_f1_std,f1_c1_mean,f1_c234_mean,f1_c5_mean,time_minutes_total
+mpnet_l256_ep1_bs16_iter5_gpu_lr1e-5_iter1,sentence-transformers/paraphrase-multilingual-mpnet-base-v2,1,0.426723065439164,,0.42274860741396963,,0.44871302343449865,0.3260263053009167,0.4935064935064935,226.98671571666299

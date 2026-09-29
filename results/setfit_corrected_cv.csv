@@ -1,0 +1,3 @@
+﻿config_id,model_name,fold,train_size,eval_size,max_length,learning_rate,num_epochs,batch_size,predict_batch_size,sampling_strategy,num_iterations,use_amp,accuracy,macro_f1,f1_c1,f1_c234,f1_c5,time_minutes,status,error
+mpnet_l256_ep1_bs16_iter5_gpu_lr1e-5_iter1,sentence-transformers/paraphrase-multilingual-mpnet-base-v2,0,16073,4019,256,1e-05,1.0,16,32,oversampling,1.0,True,0.426723065439164,0.42274860741396963,0.44871302343449865,0.3260263053009167,0.4935064935064935,226.98671571666299,ok,
+mpnet_l256_ep1_bs16_oversampling_corrected_lr1e-5_iterauto,sentence-transformers/paraphrase-multilingual-mpnet-base-v2,0,16073,4019,256,1e-05,1.0,16,32,oversampling,,True,,,,,,0.8678275333329414,error,TypeError: 'float' object is not subscriptable

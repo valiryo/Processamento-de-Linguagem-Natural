@@ -1,0 +1,2 @@
+﻿model,fold,max_length,learning_rate,epochs,physical_batch,gradient_accumulation,effective_batch,accuracy,macro_f1,runtime_minutes
+FacebookAI/xlm-roberta-base,0,384,2e-05,2,4,4,16,0.44837024135357056,0.4304038578269549,109.56069802333369

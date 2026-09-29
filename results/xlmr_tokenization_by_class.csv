@@ -1,0 +1,10 @@
+﻿model,max_length,class,n_samples,n_truncated,pct_truncated,tokens_discarded
+FacebookAI/xlm-roberta-base,256,c1,6347,2447,38.55364739246888,576231
+FacebookAI/xlm-roberta-base,256,c234,6853,2714,39.60309353567781,653868
+FacebookAI/xlm-roberta-base,256,c5,6892,1949,28.279164248403948,421390
+FacebookAI/xlm-roberta-base,384,c1,6347,1299,20.466362060816135,342721
+FacebookAI/xlm-roberta-base,384,c234,6853,1492,21.771486940026268,391276
+FacebookAI/xlm-roberta-base,384,c5,6892,975,14.14683691236216,241979
+FacebookAI/xlm-roberta-base,512,c1,6347,775,12.210493146368364,213678
+FacebookAI/xlm-roberta-base,512,c234,6853,850,12.403327010068583,247215
+FacebookAI/xlm-roberta-base,512,c5,6892,538,7.806152060359837,149214
