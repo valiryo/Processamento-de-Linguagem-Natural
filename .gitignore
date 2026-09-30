@@ -24,3 +24,6 @@ output/*.xlsx
 .DS_Store
 Thumbs.db
 .vscode/
+
+# Cache do npy
+*.npy
