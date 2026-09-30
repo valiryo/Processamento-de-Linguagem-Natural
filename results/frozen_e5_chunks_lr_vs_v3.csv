@@ -1,0 +1,2 @@
+new_accuracy,v3_accuracy,disagreement,new_right_v3_wrong,v3_right_new_wrong,oracle_diagnostic,rule_targeted_ties,rule_fixes,rule_breaks,v3_plus_rule_accuracy,v3_plus_rule_macro_f1
+0.42832968345610195,0.47566195500696795,0.41613577543300817,2654,3605,0.6077543300816245,421,64,74,0.4751642444754131,0.4734127259451828
