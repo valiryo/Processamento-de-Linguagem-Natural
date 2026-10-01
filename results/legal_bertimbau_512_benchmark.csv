@@ -1,0 +1,2 @@
+model,max_length,sec_per_step,peak_vram_gb,est_minutes_per_fold,train_loss,transformers,torch
+rufimelo/Legal-BERTimbau-base,512,6.9316647449997255,2.6936216354370117,232.2107689574908,1.1060586547851563,5.17.0,2.14.0+cu126

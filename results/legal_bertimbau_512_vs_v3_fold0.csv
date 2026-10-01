@@ -1,0 +1,2 @@
+label,n,new_accuracy,v3_accuracy,disagreement,new_right_v3_wrong,v3_right_new_wrong,balance_c1,balance_c234,balance_c5,verdict
+fold0,4019,0.4687733266981836,0.4727544165215228,0.2343866633490918,338,354,62,-77,-1,NO-GO

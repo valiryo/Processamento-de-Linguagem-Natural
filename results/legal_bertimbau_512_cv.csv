@@ -1,0 +1,2 @@
+﻿fold,status,model_name,max_length,learning_rate,epochs,physical_batch,gradient_accumulation,effective_batch,fp16,seed,accuracy,macro_f1,f1_c1,f1_c234,f1_c5,train_loss,runtime_minutes,peak_vram_gb,transformers,torch,python
+0,success,rufimelo/Legal-BERTimbau-base,512,3e-05,2.0,4,4,16,True,42,0.4687733266981836,0.4588660397660573,0.49464831804281345,0.3379549393414211,0.5439948619139371,1.0290444521168571,250.38988933999983,2.6936588287353516,5.17.0,2.14.0+cu126,3.11.9
