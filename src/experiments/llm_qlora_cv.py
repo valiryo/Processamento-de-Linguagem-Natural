@@ -188,7 +188,9 @@ def build_model(args, tokenizer):
     return model
 
 
-def make_training_args(args, output_dir: Path, max_steps: int | None) -> TrainingArguments:
+def make_training_args(args, output_dir: Path, max_steps: int | None, n_train: int) -> TrainingArguments:
+    eff = args.batch_size * args.gradient_accumulation
+    total_steps = max_steps if max_steps else math.ceil(n_train / eff * args.epochs)
     kwargs = dict(
         output_dir=str(output_dir),
         per_device_train_batch_size=args.batch_size,
@@ -198,7 +200,7 @@ def make_training_args(args, output_dir: Path, max_steps: int | None) -> Trainin
         num_train_epochs=args.epochs,
         max_steps=max_steps if max_steps else -1,
         lr_scheduler_type="cosine",
-        warmup_ratio=0.03,
+        warmup_steps=max(1, int(0.03 * total_steps)),  # warmup_ratio foi removido no transformers 5.x
         weight_decay=0.0,
         max_grad_norm=1.0,
         fp16=True,
@@ -210,14 +212,23 @@ def make_training_args(args, output_dir: Path, max_steps: int | None) -> Trainin
         seed=args.seed,
         data_seed=args.seed,
         dataloader_num_workers=0,
-        group_by_length=True,
+        train_sampling_strategy="group_by_length",  # transformers 5.x; no 4.x era group_by_length=True
     )
-    try:
-        return TrainingArguments(**kwargs)
-    except TypeError:
-        kwargs.pop("group_by_length")
-        print("AVISO: group_by_length não suportado nesta versão; seguindo sem ele (mais lento).")
-        return TrainingArguments(**kwargs)
+    # Argumentos opcionais que variam entre versões: se a versão não os aceita,
+    # remove e segue (group_by_length só acelera, não muda o método).
+    optional = {"train_sampling_strategy", "group_by_length"}
+    while True:
+        try:
+            return TrainingArguments(**kwargs)
+        except TypeError as exc:
+            msg = str(exc)
+            key = msg.split("'")[1] if "'" in msg else ""
+            if key not in optional or key not in kwargs:
+                raise
+            kwargs.pop(key)
+            print(f"AVISO: '{key}' não suportado nesta versão; seguindo sem ele.")
+            if key == "train_sampling_strategy":
+                kwargs["group_by_length"] = True
 
 
 def train_and_predict(args, tokenizer, train_texts, train_y, pred_sets, output_dir, max_steps=None):
@@ -227,7 +238,7 @@ def train_and_predict(args, tokenizer, train_texts, train_y, pred_sets, output_d
 
     trainer = FixedGASTrainer(
         model=model,
-        args=make_training_args(args, output_dir, max_steps),
+        args=make_training_args(args, output_dir, max_steps, len(train_ds)),
         train_dataset=train_ds,
         data_collator=DataCollatorWithPadding(tokenizer),
         processing_class=tokenizer,
