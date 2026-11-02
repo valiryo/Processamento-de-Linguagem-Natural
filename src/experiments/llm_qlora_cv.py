@@ -95,13 +95,13 @@ class FixedGASTrainer(Trainer):
 
 
 class NonFiniteLossCallback(TrainerCallback):
-    """Aborta se loss/grad_norm virar NaN/Inf (risco real: FP16 em modelo
-    treinado em BF16)."""
+    """Aborta se a loss virar NaN/Inf (risco real: FP16 em modelo treinado em
+    BF16). grad_norm=inf NÃO aborta: com FP16 o GradScaler o produz nos
+    primeiros passos enquanto ajusta a escala, e o Trainer pula esses passos."""
 
     def on_log(self, args, state, control, logs=None, **kwargs):
-        for key in ("loss", "grad_norm"):
-            if logs and key in logs and not math.isfinite(float(logs[key])):
-                raise RuntimeError(f"{key} não finito no passo {state.global_step}: {logs[key]}")
+        if logs and "loss" in logs and not math.isfinite(float(logs["loss"])):
+            raise RuntimeError(f"loss não finita no passo {state.global_step}: {logs['loss']}")
         return control
 
 
