@@ -27,3 +27,18 @@ Thumbs.db
 
 # Cache do npy
 *.npy
+
+# Artefatos locais do EP2: versionar os scripts de geração, não as saídas
+/results/ep2/
+/entrega/
+*.zip
+
+# Pesos de modelos, inclusive fora de checkpoints/
+*.safetensors
+*.pt
+*.pth
+*.ckpt
+pytorch_model*.bin
+
+# Arquivos temporários do Microsoft Office
+~$*
