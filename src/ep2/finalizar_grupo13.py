@@ -7,6 +7,7 @@ O código é disponibilizado em um arquivo complementar separado.
 from __future__ import annotations
 
 from collections import Counter
+import argparse
 import importlib.metadata
 import json
 from pathlib import Path
@@ -28,6 +29,10 @@ BASE = ROOT / 'results/ep2/candidato_incerteza'
 FINAL = BASE / 'final'
 OUT = ROOT / 'results/ep2/entrega_grupo13'
 TITLE = 'EP2 — Classificação de clareza em respostas e-SIC — Grupo 13'
+
+
+def decimal_pt(value, digits=4):
+    return f'{value:.{digits}f}'.replace('.', ',')
 
 
 def audit_final():
@@ -95,25 +100,27 @@ def content(stats):
             if section == 5:
                 p('Os componentes reutilizados mantêm as configurações históricas abaixo. Não houve nova seleção desses hiperparâmetros com o teste1 ou teste2. Os scripts completos integram o pacote de código.')
                 table(['Componente-base', 'Configuração histórica'], [
-                    ['BERTimbau 512', 'Contexto 512; learning rate 3e-5; 2 épocas; batch físico 4'],
-                    ['BERTimbau soft-label', 'Contexto 256; learning rate 3e-5; 2 épocas; batch físico 8; alvos por distribuição de duplicatas do treino'],
-                    ['BERTimbau ordinal', 'Contexto 256; learning rate 3e-5; 2 épocas; batch físico 8; dois limiares ordenados'],
-                    ['NorBERTo', 'Contexto 1024; learning rate 2e-5; 2 épocas; batch físico 2'],
+                    ['BERTimbau 512', 'Contexto 512; learning rate 3e-5; 2 épocas; batch físico 4; acumulação 4'],
+                    ['BERTimbau soft-label', 'Contexto 256; learning rate 3e-5; 2 épocas; batch físico 8; acumulação 2; alvos por distribuição de duplicatas do treino'],
+                    ['BERTimbau ordinal', 'Contexto 256; learning rate 3e-5; 2 épocas; batch físico 8; acumulação 2; dois limiares ordenados'],
+                    ['NorBERTo', 'Contexto 1024; learning rate 2e-5; 2 épocas; batch físico 2; acumulação 8'],
                     ['LinearSVC', 'C=0,5; class_weight=balanced; TF-IDF word (1,2) e char_wb (3,5)'],
                     ['Baseline', 'TfidfVectorizer padrão; LogisticRegression com class_weight=balanced']])
+                p('Nos quatro componentes neurais, o batch efetivo é 16, seed=42, weight decay=0,01 e precisão FP16. Esses componentes foram treinados em todo o treino para a inferência final; as probabilidades já estavam disponíveis em cache e foram reutilizadas pelo gate.')
             elif section == 8:
                 table(['Estratégia', 'Conjunto', 'Acertos', 'Acurácia'], [
                     ['EP1 — Ensemble V3', 'teste1 (900)', str(stats['acertos_ep1']), pct(stats['acuracia_ep1'])],
                     ['EP2 — gate de incerteza', 'teste1 (900)', str(stats['acertos_ep2']), pct(stats['acuracia_ep2'])]])
                 q = stats['contingencia']
                 table(['', 'EP2 correto', 'EP2 errado'], [['EP1 correto', str(q['ambos_acertam']), str(q['somente_ep1_acerta'])], ['EP1 errado', str(q['somente_ep2_acerta']), str(q['ambos_erram'])]])
-                p(f"O EP2 tem ganho numérico de quatro acertos (+{stats['delta_ep2_menos_ep1_pp']:.4f} ponto percentual). Há {q['somente_ep1_acerta']} casos em que só o EP1 acerta e {q['somente_ep2_acerta']} em que só o EP2 acerta. Foi aplicado McNemar exato bicaudal, usando a distribuição Binomial(b+c, 0,5); estatística min(b,c) = {stats['estatistica_mcnemar_exato_min_b_c']}. O p-valor é {stats['mcnemar_p_exato_bicaudal']:.10f}.")
-                p('Como p > 0,05, NÃO foi demonstrada superioridade estatisticamente significativa do EP2. Isso não demonstra equivalência dos métodos; significa que estes dados não sustentam a alegação de melhoria pelo teste aplicado. Não foi efetuada nova seleção ou ajuste após observar o resultado.')
-                p('O método e seus pesos foram congelados antes da inferência e da abertura do gabarito do teste1. A comparação usa as predições históricas reais do EP1, conferidas contra a planilha entregue, e os mesmos 900 textos/rótulos. O p-valor foi recalculado independentemente com scipy.stats.binomtest e coincide com o resultado do script de entrega.')
+                p(f"O EP2 tem ganho numérico de quatro acertos (+{decimal_pt(stats['delta_ep2_menos_ep1_pp'])} ponto percentual). Há b={q['somente_ep1_acerta']} casos em que só o EP1 acerta e c={q['somente_ep2_acerta']} em que só o EP2 acerta. Foi aplicado McNemar exato bicaudal, usando a distribuição Binomial(b+c, 0,5); estatística min(b,c) = {stats['estatistica_mcnemar_exato_min_b_c']}. O p-valor é {decimal_pt(stats['mcnemar_p_exato_bicaudal'], 10)}.")
+                p('Como p > 0,05, não foi demonstrada superioridade estatisticamente significativa do EP2. Isso não demonstra equivalência dos métodos; significa que estes dados não sustentam a alegação de melhoria pelo teste aplicado. Não foi efetuada nova seleção ou ajuste após observar o resultado.')
+                p('A arquitetura e os pesos do gate foram congelados antes de gerar suas predições finais e abrir o gabarito do teste1. As probabilidades dos componentes-base já existiam em cache; a combinação final do EP2 foi produzida somente após esse congelamento. A comparação usa as predições históricas reais do EP1, conferidas contra a planilha entregue, e os mesmos 900 textos/rótulos. O p-valor foi recalculado com uma implementação independente, scipy.stats.binomtest, e coincide com o resultado do script de entrega.')
                 p('O teste2 foi utilizado somente para inferência, com 897 rótulos: 296 c1, 273 c234 e 328 c5. O XLSX contém exclusivamente resp_text e clarity; cada texto e sua ordem foram comparados com o original. A acurácia do teste2 é desconhecida, pois seu gabarito não está disponível. A distribuição de previsões não foi usada para modificar o método.')
             elif section == 10:
-                p('Repositório-base: https://github.com/valiryo/Processamento-de-Linguagem-Natural. A versão local utilizada no EP2 acompanha o arquivo complementar codigo_grupo13.zip, que deve ser disponibilizado com a entrega. O pacote contém os scripts e os artefatos leves de auditoria, sem dados brutos, ambientes virtuais ou checkpoints. A atualização remota do GitHub não foi realizada automaticamente.')
-                p('Para reproduzir: obter o repositório-base e os dados oficiais; sobrepor o pacote de código na raiz; utilizar Python 3.11.9 e as dependências abaixo. Os CSVs OOF históricos e os caches de inferência referenciados nos manifests são entradas necessárias. A ausência deles exige reconstrução pelos scripts históricos e pode envolver treinamento neural demorado; não é equivalente à execução rápida do gate.')
+                p('Repositório-base: https://github.com/valiryo/Processamento-de-Linguagem-Natural. O código do EP2 está organizado em src/ep2. O arquivo complementar codigo_grupo13.zip reúne os scripts, o modelo do gate e registros de auditoria, sem dados brutos, ambientes virtuais ou checkpoints neurais. Os artefatos gerados permanecem separados do código no controle de versão.')
+                p('Para reproduzir o desenvolvimento: obter o repositório-base e os dados oficiais; utilizar Python 3.11.9 e as dependências abaixo. Os CSVs OOF históricos referenciados nos manifests são entradas necessárias. O pacote complementar inclui o gate final já congelado: nesse caso, não executar novamente preparar ou congelar. Para recalcular esses artefatos desde o início, usar uma cópia de trabalho separada, sem os arquivos candidato.json, modelo.json e congelamento.json previamente fornecidos; preservar o pacote original.')
+                p('A inferência requer os caches históricos validados de results/ep2/inferencia_v3. Se eles não estiverem disponíveis, a sequência inferir_v3_ep2.py preparar, rodar e separar reconstrói os componentes com os scripts do EP1, incluindo treinamentos neurais. Essa reconstrução pode ser demorada e apresentar variação numérica; não é a execução rápida a partir dos caches originais. O teste1 rotulado permanece reservado à avaliação do método escolhido, nunca ao ajuste de parâmetros.')
                 table(['Etapa', 'Comando PowerShell, na raiz'], [
                     ['Integridade', '.\\.venv\\Scripts\\python.exe src/ep2/gating_discursivo.py --check-data'],
                     ['Validação do gate', '.\\.venv\\Scripts\\python.exe src/ep2/gating_discursivo.py'],
@@ -125,7 +132,7 @@ def content(stats):
                 p('A reprodução deve preservar as escolhas congeladas; não usar o teste1 para refazer seleção. No workspace da entrega, as saídas já existem e não devem ser apagadas para repetir comandos. Para reprodução do desenvolvimento em pasta alternativa, usar --out results/ep2/gating_reproducao. O teste estatístico é executado por entrega_ep2.py mcnemar com --metodo-congelado e os caminhos dos CSVs, conforme README_ENTREGA.md.')
                 table(['Dependência', 'Versão verificada'], [[name, importlib.metadata.version(name)] for name in ['numpy', 'pandas', 'scipy', 'scikit-learn', 'openpyxl', 'torch', 'transformers', 'reportlab', 'python-docx', 'pypdf']])
                 p('Foram verificados o gradiente analítico por diferenças finitas, o isolamento de grupos, a cobertura das 20.092 linhas de avaliação, a serialização do modelo, o bloqueio antes do congelamento e a exportação com dados sintéticos. A entrega real foi adicionalmente conferida quanto a hashes, quantidade de linhas, classes e ordem dos textos. Os PDFs e o DOCX possuem verificações estruturais.')
-                p(f"Rastreabilidade: SHA-256 do modelo = {stats['model_sha256']}; SHA-256 do congelamento = {stats['freeze_sha256']}. Os manifests registram os demais hashes, a configuração completa e a procedência das previsões. O arquivo grupo13.zip contém relatório PDF, apresentação PDF e a planilha do teste2; as predições do teste1 ficam fora desse ZIP.")
+                p('Rastreabilidade: os hashes SHA-256 completos do modelo, do congelamento, das fontes e das saídas estão em candidato.json, congelamento.json e manifest_entrega.json. A geração deste relatório confere o modelo e as previsões contra esses registros. O arquivo grupo13.zip contém relatório PDF, apresentação PDF e a planilha do teste2; as predições individuais do teste1 ficam fora desse ZIP.')
             continue
         if section in (8, 10):
             continue
@@ -136,6 +143,12 @@ def content(stats):
                 value = 'Participação efetiva dos quatro integrantes confirmada pelo grupo. Não há desistências informadas.'
             elif value.startswith('A tarefa prevê'):
                 value = 'A tarefa prevê c1, c234 ou c5 a partir de resp_text. O modelo final do EP2 é uma mistura condicional de especialistas: os pesos variam com a incerteza das predições. Ele reutiliza Transformers em português e classificadores TF-IDF do EP1, substituindo a decisão final por votação por uma combinação aprendida. A hipótese foi selecionada apenas no desenvolvimento; o teste1 foi reservado para a comparação estatística após o congelamento.'
+                value += ' Chamamos de gate o mecanismo que calcula esses pesos. As predições out-of-fold (OOF) são obtidas para exemplos não usados no treinamento do respectivo modelo-base. O V3 continua sendo uma das entradas; portanto, as sete entradas não correspondem a sete modelos-base independentes.'
+            elif value.startswith('Os textos são convertidos'):
+                value = 'Os textos de entrada são convertidos em string, como nos scripts históricos; foi encontrada uma célula numérica no índice 5026 (indexação iniciada em zero). Os arquivos originais e os rótulos são preservados. Os OOFs são alinhados por row_id e conferidos contra folds, classes verdadeiras e textos do treino. Não se usam metadados de conflito de rótulos como atributos do gate.'
+                value += ' Os Transformers usam seus tokenizadores com truncamento no limite de contexto. Os componentes TF-IDF aplicam a conversão para minúsculas definida nos vetorizadores. O gate opera sobre as saídas desses componentes e não aplica nova limpeza aos textos.'
+            elif value.startswith('A padronização dos sinais'):
+                value = value.replace('é ajustada somente na metade de calibração', 'é ajustada somente na metade de calibração durante a avaliação; no ajuste final, usa todos os OOFs de treino')
             elif value.startswith('A contribuição técnica'):
                 value = 'A contribuição técnica investigada é a seleção condicional de especialistas com calibração separada da avaliação. Ela difere da regra determinística do EP1. Porém, o ganho do componente condicional sobre pesos constantes é de apenas cinco acertos OOF; a ablação não oferece evidência forte de vantagem do mecanismo adaptativo. A contribuição é incremental e sua utilidade deve ser interpretada à luz desses limites.'
             elif value.startswith('Configuração candidata:'):
@@ -144,30 +157,62 @@ def content(stats):
                 value = value.replace('no candidato final', 'no modelo final').replace('Ainda não existe avaliação independente desse candidato final.', 'A avaliação em teste1, realizada após o congelamento, é apresentada na seção 8.')
             elif value.startswith('O guia menciona'):
                 continue
+            elif value.startswith('O V3 foi reproduzido'):
+                value = 'O V3 foi reproduzido pelas funções originais de votação. Os novos arquivos estão em src/ep2 e results/ep2, com hashes SHA-256 das fontes e dos modelos. A etapa de desenvolvimento e avaliação do gate reutilizou os OOFs existentes e não exigiu novos treinamentos neurais nem alteração dos scripts históricos. Os experimentos anteriores do EP2, como TAPT, moBERTo e especialistas binários, envolveram treinamento neural e aparecem como histórico na seção 7.'
+            elif value.startswith('O treino tem '):
+                value = value.replace('20092', '20.092').replace('18432', '18.432')
+            elif value.startswith('O gate de incerteza acerta '):
+                value = value.replace('9586/', '9.586/').replace('9557/', '9.557/')
             elif value.startswith('Os casos foram amostrados'):
                 value = value.replace('O grupo deve revisar essa leitura. ', '')
             value = value.replace('O candidato usa 11 sinais', 'O modelo final usa 11 sinais')
+            if value.startswith('Caso row_id='):
+                import re
+                value = re.sub(r'(?<=: )(\d+)\.(\d{6})(?=\.)', r'\1,\2', value)
+                value = value.replace('Caso row_id=', 'Exemplo de validação, row_id=')
         if kind == 'table':
             headers, rows = value
             value = ([s.replace('Recall candidato', 'Recall EP2') for s in headers], rows)
+            if 'Cinco maiores coeficientes positivos' in headers:
+                import re
+                value = (headers, [[re.sub(r'(\d+)\.(\d{3})(?=\))', r'\1,\2', str(s)) for s in row] for row in rows])
         blocks.append((kind, value))
+    pos = next(i for i, (kind, value) in enumerate(blocks) if kind == 'heading' and value.startswith('7.'))
+    blocks.insert(pos+1, ('paragraph', 'As métricas globais abaixo são calculadas sobre as 20.092 predições de desenvolvimento concatenadas, e não pela média simples dos cinco folds. Macro-F1 é a média do F1 das três classes; recall mede a proporção de exemplos reais da classe recuperados. No gate, a avaliação também mantém separadas as metades de calibração e avaliação dentro de cada fold.'))
     return blocks, summary
 
 
 def write_report(blocks):
     from docx import Document
-    from docx.shared import Pt
+    from docx.shared import Pt, Cm
+    from docx.oxml import OxmlElement
+    from docx.oxml.ns import qn
+    from docx.enum.text import WD_ALIGN_PARAGRAPH
     from reportlab.lib import colors
     from reportlab.lib.pagesizes import A4
     from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-    from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+    from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, KeepTogether
     styles = getSampleStyleSheet()
     styles['Heading2'].keepWithNext = True
-    styles.add(ParagraphStyle('Body13', fontName='Helvetica', fontSize=9.5, leading=13, spaceAfter=7, allowWidows=0, allowOrphans=0))
-    styles.add(ParagraphStyle('Cell13', fontName='Helvetica', fontSize=8, leading=11, splitLongWords=True))
+    styles.add(ParagraphStyle('Body13', fontName='Helvetica', fontSize=10, leading=13, spaceAfter=6, allowWidows=0, allowOrphans=0))
+    styles.add(ParagraphStyle('Cell13', fontName='Helvetica', fontSize=8.5, leading=11, splitLongWords=True))
     doc = Document()
-    doc.styles['Normal'].font.name = 'Calibri'
+    section = doc.sections[0]
+    section.page_width, section.page_height = Cm(21), Cm(29.7)
+    section.left_margin = section.right_margin = Pt(50)
+    section.top_margin, section.bottom_margin = Pt(40), Pt(45)
+    section.footer_distance = Pt(20)
+    doc.core_properties.title = TITLE
+    doc.core_properties.author = 'Grupo 13'
+    doc.styles['Normal'].font.name = 'Arial'
     doc.styles['Normal'].font.size = Pt(10)
+    doc.styles['Normal'].paragraph_format.space_after = Pt(6)
+    doc.styles['Normal'].paragraph_format.widow_control = True
+    doc.styles['Heading 1'].paragraph_format.keep_with_next = True
+    footer = section.footer.paragraphs[0]
+    footer.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+    footer.add_run('ACH2118 | EP2 | Grupo 13 | Página ').font.size = Pt(8)
+    field = OxmlElement('w:fldSimple'); field.set(qn('w:instr'), 'PAGE'); footer._p.append(field)
     flow, md = [], []
     for kind, value in blocks:
         if kind == 'heading':
@@ -181,16 +226,28 @@ def write_report(blocks):
         else:
             headers, rows = value
             t = doc.add_table(rows=1, cols=len(headers)); t.style = 'Light Shading Accent 1'
+            widths = [140, 355] if len(headers) == 2 else [495/len(headers)] * len(headers)
+            if headers[0] == 'Integrante': widths = [300, 195]
+            t.autofit = False
+            for column, width in zip(t.columns, widths): column.width = Pt(width)
             for cell, s in zip(t.rows[0].cells, headers): cell.text = s
             for row in rows:
                 for cell, s in zip(t.add_row().cells, row): cell.text = str(s)
+            for i, row in enumerate(t.rows):
+                properties = row._tr.get_or_add_trPr()
+                properties.append(OxmlElement('w:cantSplit'))
+                if i == 0: properties.append(OxmlElement('w:tblHeader'))
+                for cell, width in zip(row.cells, widths):
+                    cell.width = Pt(width)
+                    for paragraph in cell.paragraphs:
+                        paragraph.paragraph_format.keep_with_next = i < len(t.rows)-1
+                        for run in paragraph.runs: run.font.size = Pt(8.5)
             md.extend(['| ' + ' | '.join(headers) + ' |', '| ' + ' | '.join(['---'] * len(headers)) + ' |'])
             md.extend('| ' + ' | '.join(map(str, row)) + ' |' for row in rows); md.append('')
             pdf_rows = [[Paragraph(escape(str(s)), styles['Cell13']) for s in row] for row in [headers]+rows]
-            widths = [140, 355] if len(headers) == 2 else [495/len(headers)] * len(headers)
             t = Table(pdf_rows, colWidths=widths, repeatRows=1, hAlign='LEFT')
             t.setStyle(TableStyle([('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#dfeaf2')), ('VALIGN', (0, 0), (-1, -1), 'TOP'), ('GRID', (0, 0), (-1, -1), .3, colors.lightgrey), ('TOPPADDING', (0, 0), (-1, -1), 5), ('BOTTOMPADDING', (0, 0), (-1, -1), 5)]))
-            flow.extend([t, Spacer(1, 9)])
+            flow.append(KeepTogether([t, Spacer(1, 9)]))
     doc.save(OUT / 'Relatorio_EP2_grupo13.docx')
     (OUT / 'Relatorio_EP2_grupo13.md').write_text('\n'.join(md), encoding='utf-8')
     def footer(canvas, document):
@@ -255,6 +312,8 @@ def package(stats):
               FINAL / 'mcnemar_oficial.json']:
         sources.append(p)
     sources += sorted((ROOT / 'results/ep2/gating_discursivo').glob('fold*_calibracao.json'))
+    sources += sorted((ROOT / 'results/ep2/analise_candidato').glob('*.csv'))
+    sources += sorted((ROOT / 'results/ep2/analise_candidato').glob('*.json'))
     with ZipFile(OUT / 'codigo_grupo13.zip', 'w', ZIP_DEFLATED) as z:
         for path in sources: z.write(path, path.relative_to(ROOT).as_posix())
         z.write(OUT / 'README_ENTREGA.md', 'README_ENTREGA.md')
@@ -265,15 +324,19 @@ def package(stats):
         'fontes_sha256': {str(p.relative_to(ROOT)): sha(p) for p in [Path(__file__), FINAL / 'mcnemar_oficial.json', FINAL / 'manifest.json', BASE / 'congelamento.json', ROOT / 'src/ep2/documentar_candidato.py']}})
 
 
-def main():
+def main(report_only=False):
     stats = audit_final()
     OUT.mkdir(parents=True, exist_ok=True)
     blocks, _ = content(stats)
     write_report(blocks)
-    write_slides(stats)
+    if report_only:
+        if not (OUT / 'Apresentacao_EP2_grupo13.pdf').is_file() or not (OUT / 'Roteiro_grupo13.md').is_file():
+            raise FileNotFoundError('A revisão somente do relatório requer apresentação e roteiro existentes')
+    else:
+        write_slides(stats)
     readme = '''# Entrega EP2 — Grupo 13
 
-Método final: gate de incerteza, congelado antes da inferência e do McNemar.
+Método final: gate de incerteza, congelado antes de suas predições finais e do McNemar. As probabilidades dos componentes-base já existiam em cache.
 Integrantes confirmados: Arthur Yang Tung, Kevin Tamayose, Augusto Prado Yassuda e Filipe Valeriano Batista de Oliveira.
 
 ## Arquivos
@@ -311,11 +374,25 @@ No workspace atual, não repetir inferência nem apagar saídas: todas essas eta
 
 Os hashes identificam precisamente dados, códigos e modelos utilizados. O candidato.json original conserva seu estado histórico de preparação; o congelamento.json posterior é o registro vigente da decisão final. Os antigos rascunhos e o guia de desenvolvimento são registros históricos, não a entrega final.
 '''
+    # A instrução auditada da raiz prevalece sobre o texto histórico embutido.
+    audited_readme = ROOT / 'README_ENTREGA.md'
+    if audited_readme.is_file():
+        readme = audited_readme.read_text(encoding='utf-8')
     (OUT / 'README_ENTREGA.md').write_text(readme, encoding='utf-8')
     package(stats)
+    if (ROOT / 'src/ep2/empacotar_reproducao.py').is_file() and audited_readme.is_file():
+        from empacotar_reproducao import pack
+        pack(OUT)
     print(json.dumps({'entrega': str(OUT / 'grupo13.zip'), 'codigo': str(OUT / 'codigo_grupo13.zip'), 'mcnemar_p': stats['mcnemar_p_exato_bicaudal'], 'test2_linhas': stats['test2_linhas']}, ensure_ascii=False, indent=2))
 
 
 if __name__ == '__main__':
     sys.stdout.reconfigure(encoding='utf-8')
-    main()
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--somente-relatorio', action='store_true')
+    parser.add_argument('--saida', type=Path, help='Pasta alternativa para os documentos e pacotes')
+    args = parser.parse_args()
+    if args.saida:
+        OUT = args.saida.resolve()
+        OUT.relative_to(ROOT)
+    main(report_only=args.somente_relatorio)

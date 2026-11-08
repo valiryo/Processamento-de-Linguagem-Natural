@@ -1,3 +1,7 @@
+# Reprodução final auditada em 08/11/2026
+
+Para entregar e reproduzir o gate congelado, seguir [README_ENTREGA.md](../../README_ENTREGA.md), [REPRODUCAO_EP2.md](../../REPRODUCAO_EP2.md) e [AUDITORIA_FINAL_EP2.md](../../AUDITORIA_FINAL_EP2.md). As instruções abaixo registram o desenvolvimento anterior; não substituem a rota final auditada.
+
 # EP2 — Experimento 01: especialista BERTimbau para `c234`
 
 > **Estado final — grupo 13:** o gate de incerteza foi congelado e avaliado no teste1 após autorização do usuário: 438/900 acertos, contra 434/900 do EP1; McNemar p=0,734342, sem superioridade significativa. A entrega está em `results/ep2/entrega_grupo13/`. Consulte a atualização no início de [CONTINUACAO_EP2.md](CONTINUACAO_EP2.md). O texto abaixo preserva a preparação histórica do experimento 01 e contém afirmações desatualizadas de que ele não havia sido executado.

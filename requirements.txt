@@ -1,3 +1,5 @@
+# Ambiente historico amplo. Para reproduzir o EP2, use requirements-ep2-cpu-lock.txt
+# e, se necessario, requirements-ep2-docs-lock.txt / requirements-ep2-neural-lock.txt.
 numpy
 pandas
 scikit-learn
