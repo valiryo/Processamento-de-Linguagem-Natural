@@ -118,21 +118,8 @@ def content(stats):
                 p('A arquitetura e os pesos do gate foram congelados antes de gerar suas predições finais e abrir o gabarito do teste1. As probabilidades dos componentes-base já existiam em cache; a combinação final do EP2 foi produzida somente após esse congelamento. A comparação usa as predições históricas reais do EP1, conferidas contra a planilha entregue, e os mesmos 900 textos/rótulos. O p-valor foi recalculado com uma implementação independente, scipy.stats.binomtest, e coincide com o resultado do script de entrega.')
                 p('O teste2 foi utilizado somente para inferência, com 897 rótulos: 296 c1, 273 c234 e 328 c5. O XLSX contém exclusivamente resp_text e clarity; cada texto e sua ordem foram comparados com o original. A acurácia do teste2 é desconhecida, pois seu gabarito não está disponível. A distribuição de previsões não foi usada para modificar o método.')
             elif section == 10:
-                p('Repositório-base: https://github.com/valiryo/Processamento-de-Linguagem-Natural. O código do EP2 está organizado em src/ep2. O arquivo complementar codigo_grupo13.zip reúne os scripts, o modelo do gate e registros de auditoria, sem dados brutos, ambientes virtuais ou checkpoints neurais. Os artefatos gerados permanecem separados do código no controle de versão.')
-                p('Para reproduzir o desenvolvimento: obter o repositório-base e os dados oficiais; utilizar Python 3.11.9 e as dependências abaixo. Os CSVs OOF históricos referenciados nos manifests são entradas necessárias. O pacote complementar inclui o gate final já congelado: nesse caso, não executar novamente preparar ou congelar. Para recalcular esses artefatos desde o início, usar uma cópia de trabalho separada, sem os arquivos candidato.json, modelo.json e congelamento.json previamente fornecidos; preservar o pacote original.')
-                p('A inferência requer os caches históricos validados de results/ep2/inferencia_v3. Se eles não estiverem disponíveis, a sequência inferir_v3_ep2.py preparar, rodar e separar reconstrói os componentes com os scripts do EP1, incluindo treinamentos neurais. Essa reconstrução pode ser demorada e apresentar variação numérica; não é a execução rápida a partir dos caches originais. O teste1 rotulado permanece reservado à avaliação do método escolhido, nunca ao ajuste de parâmetros.')
-                table(['Etapa', 'Comando PowerShell, na raiz'], [
-                    ['Integridade', '.\\.venv\\Scripts\\python.exe src/ep2/gating_discursivo.py --check-data'],
-                    ['Validação do gate', '.\\.venv\\Scripts\\python.exe src/ep2/gating_discursivo.py'],
-                    ['Interpretação', '.\\.venv\\Scripts\\python.exe src/ep2/analisar_candidato.py'],
-                    ['Treinamento final, em reprodução limpa', '.\\.venv\\Scripts\\python.exe src/ep2/candidato_incerteza.py preparar'],
-                    ['Congelamento, em reprodução limpa', '.\\.venv\\Scripts\\python.exe src/ep2/candidato_incerteza.py congelar --confirmar-escolha-final'],
-                    ['Inferência com caches íntegros', '.\\.venv\\Scripts\\python.exe src/ep2/candidato_incerteza.py inferir'],
-                    ['Conferência e documentos', '.\\.venv\\Scripts\\python.exe src/ep2/finalizar_grupo13.py']])
-                p('A reprodução deve preservar as escolhas congeladas; não usar o teste1 para refazer seleção. No workspace da entrega, as saídas já existem e não devem ser apagadas para repetir comandos. Para reprodução do desenvolvimento em pasta alternativa, usar --out results/ep2/gating_reproducao. O teste estatístico é executado por entrega_ep2.py mcnemar com --metodo-congelado e os caminhos dos CSVs, conforme README_ENTREGA.md.')
-                table(['Dependência', 'Versão verificada'], [[name, importlib.metadata.version(name)] for name in ['numpy', 'pandas', 'scipy', 'scikit-learn', 'openpyxl', 'torch', 'transformers', 'reportlab', 'python-docx', 'pypdf']])
-                p('Foram verificados o gradiente analítico por diferenças finitas, o isolamento de grupos, a cobertura das 20.092 linhas de avaliação, a serialização do modelo, o bloqueio antes do congelamento e a exportação com dados sintéticos. A entrega real foi adicionalmente conferida quanto a hashes, quantidade de linhas, classes e ordem dos textos. Os PDFs e o DOCX possuem verificações estruturais.')
-                p('Rastreabilidade: os hashes SHA-256 completos do modelo, do congelamento, das fontes e das saídas estão em candidato.json, congelamento.json e manifest_entrega.json. A geração deste relatório confere o modelo e as previsões contra esses registros. O arquivo grupo13.zip contém relatório PDF, apresentação PDF e a planilha do teste2; as predições individuais do teste1 ficam fora desse ZIP.')
+                from secao_reproducao_relatorio import build_reproduction_section
+                blocks.extend(build_reproduction_section())
             continue
         if section in (8, 10):
             continue
@@ -191,11 +178,12 @@ def write_report(blocks):
     from reportlab.lib import colors
     from reportlab.lib.pagesizes import A4
     from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-    from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, KeepTogether
+    from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, KeepTogether, Preformatted
     styles = getSampleStyleSheet()
     styles['Heading2'].keepWithNext = True
     styles.add(ParagraphStyle('Body13', fontName='Helvetica', fontSize=10, leading=13, spaceAfter=6, allowWidows=0, allowOrphans=0))
     styles.add(ParagraphStyle('Cell13', fontName='Helvetica', fontSize=8.5, leading=11, splitLongWords=True))
+    styles.add(ParagraphStyle('Code13', fontName='Courier', fontSize=8, leading=10.5, spaceAfter=8))
     doc = Document()
     section = doc.sections[0]
     section.page_width, section.page_height = Cm(21), Cm(29.7)
@@ -219,6 +207,19 @@ def write_report(blocks):
             doc.add_heading(value, level=1)
             flow.append(Paragraph(escape(value), styles['Heading2']))
             md.extend(['', '## ' + value, ''])
+        elif kind == 'subheading':
+            doc.add_heading(value, level=2)
+            flow.append(Paragraph(escape(value), styles['Heading3']))
+            md.extend(['', '### ' + value, ''])
+        elif kind == 'code':
+            if any(len(line) > 100 for line in value.splitlines()):
+                raise ValueError('Linha de código excede a largura segura do relatório')
+            paragraph = doc.add_paragraph()
+            paragraph.paragraph_format.keep_together = True
+            run = paragraph.add_run(value)
+            run.font.name, run.font.size = 'Courier New', Pt(8)
+            flow.append(KeepTogether([Preformatted(value, styles['Code13'])]))
+            md.extend(['```powershell', value, '```', ''])
         elif kind == 'paragraph':
             doc.add_paragraph(value)
             flow.append(Paragraph(escape(value), styles['Body13']))
@@ -321,7 +322,7 @@ def package(stats):
     dump(OUT / 'manifest_entrega.json', {'grupo': 13, 'metodo': 'gate de incerteza congelado',
         'validacao': stats, 'zip_principal_conteudo': names, 'codigo_publicado_remotamente': False,
         'arquivos_sha256': {name: sha(OUT / name) for name in files},
-        'fontes_sha256': {str(p.relative_to(ROOT)): sha(p) for p in [Path(__file__), FINAL / 'mcnemar_oficial.json', FINAL / 'manifest.json', BASE / 'congelamento.json', ROOT / 'src/ep2/documentar_candidato.py']}})
+        'fontes_sha256': {str(p.relative_to(ROOT)): sha(p) for p in [Path(__file__), FINAL / 'mcnemar_oficial.json', FINAL / 'manifest.json', BASE / 'congelamento.json', ROOT / 'src/ep2/documentar_candidato.py', ROOT / 'src/ep2/secao_reproducao_relatorio.py']}})
 
 
 def main(report_only=False):

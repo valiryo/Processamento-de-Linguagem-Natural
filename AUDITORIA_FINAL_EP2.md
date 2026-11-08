@@ -1,5 +1,7 @@
 # Auditoria final do EP2 — Grupo 13 — 08/11/2026
 
+**Atualização documental posterior à auditoria, em 08/11:** a seção 10 do relatório foi ampliada com instruções autocontidas de instalação, inferência, validação, McNemar e reconstrução integral. O relatório passou de seis para nove páginas e o ZIP principal foi atualizado. Apresentação, planilha, modelo e resultados permaneceram iguais. As menções abaixo à preservação integral do ZIP e ao relatório de seis páginas descrevem o estado no encerramento da auditoria inicial. Os registros dessa revisão estão em `results/ep2/revisao_secao10/`; os comandos foram conferidos no PDF e analisados pelo parser PowerShell.
+
 ## Parecer
 
 **A reprodução do gate congelado foi executada e aprovada em uma pasta extraída dos pacotes, com ambiente virtual novo e dependências instaladas pelos locks.** As saídas finais de teste1/teste2 e a planilha teste2 coincidiram em SHA-256 com as originais. As três variantes do gate foram recalculadas, produzindo as mesmas predições OOF e métricas. McNemar foi reproduzido, inclusive usando a referência EP1 baixada do GitHub.

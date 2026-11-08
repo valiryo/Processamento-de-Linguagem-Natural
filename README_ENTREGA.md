@@ -2,6 +2,8 @@
 
 Entrega de 08/11/2026. Método: gate de incerteza congelado sobre quatro distribuições neurais e três votos codificados. O V3 do EP1 é uma das entradas, não a saída final do EP2.
 
+O relatório PDF atualizado também contém as instruções de execução completas na seção 10 (páginas 5–9), incluindo a instalação, as duas modalidades, os comandos e os resultados esperados.
+
 ## 1. Arquivos e acesso
 
 - `grupo13.zip`: exatamente relatório PDF, apresentação PDF e `test2_rotulado_grupo13.xlsx`. Este é o ZIP acadêmico principal.

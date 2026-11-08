@@ -75,7 +75,12 @@ def pack(out=DEFAULT_OUT):
         current['arquivos_sha256'][n] = sha(out / n)
     current['auditoria_reproducao'] = {'data_local': '2026-11-08', 'manifest': 'src/ep2/artefatos_reproducao.json',
         'manifest_sha256': sha(path), 'publicacao_desta_revisao': 'PENDENTE; nenhum push realizado pela auditoria'}
-    current['auditoria_reproducao']['documentos_principais_preservados'] = True
+    previous = ROOT / 'results/ep2/auditoria_2026-11-08/antes/grupo13.zip'
+    if previous.is_file():
+        with ZipFile(previous) as z:
+            preserved = {n: z.read(n) == (out / n).read_bytes() for n in current['zip_principal_conteudo']}
+        current['auditoria_reproducao']['arquivos_preservados_desde_auditoria_inicial'] = preserved
+        current['auditoria_reproducao']['documentos_principais_preservados'] = all(preserved.values())
     delivery.write_text(json.dumps(current, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
     print(json.dumps({n: (out / n).stat().st_size for n in ['grupo13.zip', 'codigo_grupo13.zip', 'artefatos_reproducao_grupo13.zip']}, indent=2))
 
